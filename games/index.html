@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,34 +9,34 @@
         body {
             margin: 0;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: space-between;
         }
 
         canvas {
+            flex: 1;
             display: block;
             margin: auto;
             border: 1px solid #000;
         }
 
         #gameControls {
-            position: absolute;
-            bottom: 10px;
-            width: 100%;
             text-align: center;
         }
 
         .controlButton {
             font-size: 20px;
             padding: 10px 20px;
-            margin: 0 10px;
+            margin: 10px;
         }
 
         #leaderboard {
-            position: absolute;
-            top: 10px;
-            left: 10px;
             background-color: rgba(255, 255, 255, 0.7);
             padding: 10px;
             border-radius: 5px;
+            text-align: center;
         }
 
         #leaderList {
@@ -51,7 +52,7 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
     <div id="leaderboard">
         <h2>Leaderboard</h2>
         <ol id="leaderList"></ol>
