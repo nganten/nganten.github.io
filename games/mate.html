@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toon Math Game</title>
+    <style>
+        canvas {
+            display: block;
+            margin: auto;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="leaderboard">
+        <h2>Leaderboard</h2>
+        <ol id="leaderList"></ol>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const player = {
+            x: 50,
+            y: canvas.height - 50,
+            width: 50,
+            height: 50,
+            speed: 5
+        };
+
+        const obstacles = [];
+
+        let score = 0;
+
+        function drawPlayer() {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function drawObstacles() {
+            ctx.fillStyle = 'red';
+            for (const obstacle of obstacles) {
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            }
+        }
+
+        function movePlayer(direction) {
+            if (direction === 'left' && player.x - player.speed > 0) {
+                player.x -= player.speed;
+            } else if (direction === 'right' && player.x + player.width + player.speed < canvas.width) {
+                player.x += player.speed;
+            }
+        }
+
+        function spawnObstacle() {
+            const obstacle = {
+                x: Math.random() * (canvas.width - 30),
+                y: 0,
+                width: 30,
+                height: 30,
+                speed: 3,
+                question: generateMathQuestion()
+            };
+            obstacles.push(obstacle);
+        }
+
+        function generateMathQuestion() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            const operator = Math.random() < 0.5 ? '+' : '-';
+            return `${num1} ${operator} ${num2}`;
+        }
+
+        function drawMathQuestion(question) {
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText(question, canvas.width / 2 - 50, canvas.height / 2);
+        }
+
+        function checkMathAnswer(obstacle, userAnswer) {
+            const [num1, operator, num2] = obstacle.question.split(' ');
+            const correctAnswer = operator === '+' ? parseInt(num1) + parseInt(num2) : parseInt(num1) - parseInt(num2);
+            return userAnswer === correctAnswer;
+        }
+
+        function updateObstacles() {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].y += obstacles[i].speed;
+
+                if (obstacles[i].y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    score++;
+                }
+
+                if (
+                    player.x < obstacles[i].x + obstacles[i].width &&
+                    player.x + player.width > obstacles[i].x &&
+                    player.y < obstacles[i].y + obstacles[i].height &&
+                    player.y + player.height > obstacles[i].y
+                ) {
+                    // Collision with obstacle
+                    const userAnswer = prompt('Answer the math question to continue:\n' + obstacles[i].question);
+                    if (userAnswer === null || userAnswer === "") {
+                        endGame();
+                        return;
+                    }
+                    
+                    if (!checkMathAnswer(obstacles[i], parseInt(userAnswer))) {
+                        endGame();
+                        return;
+                    }
+
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText('Score: ' + score, 10, 30);
+        }
+
+        function endGame() {
+            alert('Game Over! Your score: ' + score);
+            saveScore();
+            showLeaderboard();
+            document.location.reload();
+        }
+
+        function saveScore() {
+            const playerName = prompt('Enter your name for the leaderboard:');
+            if (playerName !== null && playerName !== "") {
+                const playerScore = { name: playerName, score: score };
+                let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+                leaderboard.push(playerScore);
+                leaderboard.sort((a, b) => b.score - a.score); // Sort by score in descending order
+                localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            }
+        }
+
+        function showLeaderboard() {
+            const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            const leaderList = document.getElementById('leaderList');
+            leaderList.innerHTML = '';
+            leaderboard.slice(0, 5).forEach((entry, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${index + 1}. ${entry.name} - ${entry.score}`;
+                leaderList.appendChild(listItem);
+            });
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawPlayer();
+            drawObstacles();
+            drawScore();
+
+            updateObstacles();
+
+            if (Math.random() < 0.02) {
+                spawnObstacle();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Kontrol menggunakan touchscreen
+        canvas.addEventListener('touchstart', function(event) {
+            const touchX = event.touches[0].clientX;
+            if (touchX < canvas.width / 2) {
+                movePlayer('left');
+            } else {
+                movePlayer('right');
+            }
+        });
+
+        // Kontrol menggunakan kursor
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') {
+                movePlayer('left');
+            } else if (event.key === 'ArrowRight') {
+                movePlayer('right');
+            }
+        });
+
+        showLeaderboard(); // Menampilkan leaderboard saat halaman dimuat
+        gameLoop();
+    </script>
+</body>
+</html>
